@@ -250,6 +250,32 @@ function WireLib.hud_debug(text, oneframe)
 	end)
 end
 
+WireLib.RenderContext = {}
+local RenderContext = ACF.RenderContext
+
+timer.Create("WireLib_RenderContextPopulate_HighFreq", 0.1, 0, function()
+    -- This condition happens during first join, which causes the timer to fail
+    local localPlayer = _G.LocalPlayer()
+    if not IsValid(localPlayer) then return end
+
+    RenderContext.ViewSetup = render.GetViewSetup()
+    -- Cancel out if invalid lookat entity.
+    local lookat = LocalPlayer:GetEyeTrace().Entity
+    if
+        IsValid(lookat) and
+        lookat:GetPos():Distance(RenderContext.ViewSetup.origin) < (lookat.MaxWorldTipDistance or 256)
+    then
+        RenderContext.LookAt = lookat
+    else
+        RenderContext.LookAt = nil
+    end
+		
+    local wire_drawoutline = GetConVar("wire_drawoutline")
+    if wire_drawoutline then
+        RenderContext.ShouldDrawOutline = wire_drawoutline:GetBool()
+    end
+end)
+
 local old_renderhalos = WireLib.__old_renderhalos or hook.GetTable().PostDrawEffects.RenderHalos
 WireLib.__old_renderhalos = old_renderhalos
 if old_renderhalos ~= nil then
